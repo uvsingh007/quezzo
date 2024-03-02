@@ -292,9 +292,6 @@ li{
     margin-bottom: 40px;
 }
 
-<<<<<<< HEAD
-.lang-card{
-=======
 .lang-container{
     display: flex;
     justify-content: space-evenly;
@@ -303,7 +300,6 @@ li{
 }
 
 .lang-card {
->>>>>>> 193a38a1d1ebbae86e41e9b0baf5d78e9ec7c043
     position: relative;
     margin-bottom: 20px;
     margin-right: 20px;
@@ -320,12 +316,6 @@ li{
     filter: grayscale(0%);
 }
 
-<<<<<<< HEAD
-.lang-card:hover{
-    filter: grayscale(0%);
-}
-=======
->>>>>>> 193a38a1d1ebbae86e41e9b0baf5d78e9ec7c043
 
 .lang-card>img{
     height: 100px;

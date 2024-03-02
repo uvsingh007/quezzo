@@ -13,6 +13,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     incorrectCount : 0
   }
 
+  let resultData = {
+    userId: localStorage.getItem("userId"),
+    resultTitle: "pending",
+    questions: [],
+    answers: [],
+    correctAnswers: [],
+    totalScore: 0,
+    correctCount: 0,
+    incorrectCount: 0,
+    recordingPath: null // Initialize recordingPath to null
+  };
+  
   const codeContainer = document.getElementById("codeContainer");
   let question = [];
   let currentQuestionIndex = 0;
@@ -90,8 +102,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (currentQuestionIndex < Math.min(10, questions.length)) {
       updateQuestion();
     } else {
-      saveQuizResults();
-      endQuiz();
+
+    saveQuizResults();
+    endQuiz();
     }
   }
   function updateProgressBar() {
@@ -139,9 +152,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   
   function endQuiz() {
     stopRecording();
-    console.log("enderwecoerding")
-  
-    submitResults();
     scoreElement.textContent = score;
     // setTimeout(function () {
     //   window.location.href = "../pages/result.html";
@@ -178,7 +188,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   function displayCode(code) {
     const preElement = document.createElement("pre");
     const codeElement = document.createElement("code");
-    const languageClass = `language-${language.toLowerCase()}`;
+    // const languageClass = `language-${language.toLowerCase()}`;
+    const languageClass = `language-java`
+
     codeElement.className = languageClass;
     codeElement.textContent = code;
     preElement.appendChild(codeElement);
@@ -229,62 +241,113 @@ document.addEventListener("DOMContentLoaded", async function () {
       selectedOptionIndex = null;
     }
   }
+  let mediaRecorder;
 
-  function startRecording() {
+  async function startRecording() {
     try {
-      console.log('Starting recording...');
-      const stream = navigator.mediaDevices.getDisplayMedia({ video: true })
-        .then(function (stream) {
-          const mediaRecorder = new MediaRecorder(stream);
-          const recordedChunks = [];
-  
-          mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-              recordedChunks.push(event.data);
-            }
-          };
-  
-          mediaRecorder.onstop = () => {
-            const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
-            postRecordingToServer(recordedBlob);
-          };
-  
-          mediaRecorder.start();
-  
-          // Save the mediaRecorder object for later use
-          localStorage.setItem('mediaRecorder', JSON.stringify(mediaRecorder));
-          console.log('Recording started.');
-        })
-        .catch(function (error) {
-          console.error('Error starting recording:', error);
-        });
+      const isScreenShareReady = await checkScreenShareReadiness();
+
+      console.log("isScreenShareReady:", isScreenShareReady);
+
+      if (isScreenShareReady) {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const mediaRecord = new MediaRecorder(stream);
+        mediaRecorder = mediaRecord;
+        const recordedChunks = [];
+        localStorage.setItem('mediaRecorder', JSON.stringify(mediaRecord));
+        console.log(mediaRecord);
+
+        mediaRecord.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecord.onstop = () => {
+          const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+          postRecordingToServer(recordedBlob, (recordingPath) => {
+            resultData.recordingPath = recordingPath;
+            submitResults(resultData);
+          });
+
+        };
+
+        mediaRecord.start();
+
+        console.log("Accessing camera...");
+        await accessCamera();
+        console.log("Camera access successful.");
+
+        console.log("Updating...");
+        await update();
+        console.log("Update successful.");
+      } else {
+        alert("Screen share canceled. Please reload the page when you are ready.");
+        location.reload();
+      }
     } catch (error) {
       console.error('Error starting recording:', error);
+      alert("Error starting recording. Please allow access and reload the page to start the quiz.");
+      location.reload();
     }
   }
+
+async function checkScreenShareReadiness() {
+  console.log("Entering checkScreenShareReadiness");
+  return new Promise(function (resolve) {
+    try {
+      const isReady = confirm("Are you ready to share your screen? Click OK when ready.");
+
+      if (isReady || isReady === undefined) {
+        console.log("Resolved with true in checkScreenShareReadiness");
+        resolve(true);
+      } else {
+        console.log("Resolved with false in checkScreenShareReadiness");
+        resolve(false);
+      }
+    } catch (error) {
+      console.error("Error in checkScreenShareReadiness:", error);
+      console.log("Resolved with false in checkScreenShareReadiness (error case)");
+      resolve(false);
+    }
+  });
+}
+
   
   function stopRecording() {
-    const mediaRecorder = JSON.parse(localStorage.getItem('mediaRecorder'));
-  
+
+    console.log(mediaRecorder);
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
       console.log('Recording stopped.');
     }
-  
     localStorage.removeItem('mediaRecorder');
   }
-  
-  function postRecordingToServer(blob) {
-    const formData = new FormData();
-    formData.append('recording', blob, 'quiz_recording.webm');
-  
-    fetch(`${BASE_URL}/upload`, {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => response.json())
-      .then(data => console.log('Recording uploaded:', data))
-      .catch(error => console.error('Error uploading recording:', error));
+  let recordPath;
+
+  async function postRecordingToServer(blob, callback) {
+    try {
+      const formData = new FormData();
+      formData.append('recording', blob, 'quiz_recording.webm');
+      const response = await fetch(`${BASE_URL}/api/save-recording`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        recordPath = data.recordingPath;
+        console.log('Recording uploaded:', data);
+
+        if (typeof callback === 'function') {
+          callback(recordPath);
+        }
+      } else {
+        console.error('Failed to upload recording:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error uploading recording:', error);
+    }
   }
 
   async function fetchQuestions(language) {
@@ -341,8 +404,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Fetch Questions
   await fetchQuestions(language);
 
-  async function submitResults() {
-    const resultData = {
+  async function submitResults(resultDataz) {
+    resultData = {
       userId: localStorage.getItem("userId"),
       resultTitle: calculateResultTitle(score),
       questions: question,
@@ -352,11 +415,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       correctCount: localStorage.getItem("correctAnswer") / 10,
       incorrectCount: localStorage.getItem("incorrectAnswer") / 10,
       languageName : localStorage.getItem("lang"),
+      recordingPath: resultDataz.recordingPath,
     };
-    console.log(typeof parseInt(localStorage.getItem("correctAnswer") / 10));
-    localStorage.setItem("resultData", JSON.stringify(resultData));
-    const token = localStorage.getItem('token');
     console.log(resultData);
+
+    const token = localStorage.getItem('token');
     try {
       const response = await fetch(`${BASE_URL}/results/add`, {
         method: 'POST',
@@ -375,9 +438,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     } catch (error) {
       console.error('Error submitting results:', error);
     }
+
     const userId = localStorage.getItem('userId');
     const tot = Number(localStorage.getItem("totalScoreOfUser")) + Number(score);
     console.log(tot);
+
     try {
       const userResponse = await fetch(`http://localhost:3000/users/${userId}`, {
         method: 'PATCH',
@@ -387,7 +452,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         },
         body: JSON.stringify({ totalScore: tot }),
       });
-      
+
       if (userResponse.ok) {
         console.log('User totalScore updated successfully');
       } else {
@@ -396,8 +461,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     } catch (userError) {
       console.error('Error updating user totalScore:', userError);
     }
+
     localStorage.setItem("totalScoreOfUser", Number(localStorage.getItem("totalScoreOfUser")) + Number(score));
-  }
+  } 
 
   function saveQuizResults() {
     localStorage.setItem("questions", JSON.stringify(question));
@@ -491,6 +557,14 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
   
+  if (
+    navigator.mediaDevices &&
+    navigator.mediaDevices.getUserMedia &&
+    navigator.mediaDevices.getDisplayMedia
+  ) {
+    // Ask for screen share readiness
+    
+  }
   // Check if getUserMedia and screen sharing are supported
 
   
@@ -518,17 +592,112 @@ document.addEventListener("DOMContentLoaded", async function () {
       isDragging = false;
     });
   }
-  let isCameraActive = false;
-  function startQuizIfReady() {
-    if (isCameraActive && isScreenShareActive) {
-      startRecording();
-      // startQuiz();
-    }
-  }
-  startQuizIfReady();
-  
-
 
   ////////////////////////////////   TIMER CODE ///////////////////////////
+
+  var width = 150,
+    height = 150,
+    timePassed = 0,
+    timeLimit = 26;
+
+  var fields = [
+    {
+      value: timeLimit,
+      size: timeLimit,
+      update: function () {
+        return (timePassed = timePassed + 1);
+      },
+    },
+  ];
+
+  var arc = d3.svg
+    .arc()
+    .innerRadius(width / 3 - 10)
+    .outerRadius(width / 3 - 25)
+    .startAngle(0)
+    .endAngle(function (d) {
+      return (d.value / d.size) * 2 * Math.PI;
+    });
+
+  var svg = d3
+    .select(".container")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  var field = svg
+    .selectAll(".field")
+    .data(fields)
+    .enter()
+    .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+    .attr("class", "field");
+
+  var back = field
+    .append("path")
+    .attr("class", "path path--background")
+    .attr("d", arc);
+
+  var path = field.append("path").attr("class", "path path--foreground");
+
+  var label = field.append("text").attr("class", "label").attr("dy", ".35em");
+
+  function pulseText() {
+    back.classed("pulse", true);
+    label.classed("pulse", true);
+
+    if (timeLimit - timePassed >= 0) {
+      label
+        .style("font-size", "20px")
+        .attr("transform", "translate(0," + +8 + ")")
+        .text(function (d) {
+          return d.size - d.value;
+        });
+    }
+
+    label
+      .transition()
+      .ease("elastic")
+      .duration(900)
+      .style("font-size", "25px")
+      .attr("transform", "translate(0," + -0 + ")");
+  }
+
+  function arcTween(b) {
+    var i = d3.interpolate(
+      {
+        value: b.previous,
+      },
+      b
+    );
+    return function (t) {
+      return arc(i(t));
+    };
+  }
+
+  async function update() {
+    field.each(function (d) {
+      (d.previous = d.value), (d.value = d.update(timePassed));
+    });
+
+    path.transition().ease("elastic").duration(500).attrTween("d", arcTween);
+
+    if (timeLimit - timePassed <= 10) {
+      pulseText();
+    } else {
+      label.text(function (d) {
+        return d.size - d.value;
+      });
+    }
+    if (timePassed <= timeLimit) {
+      setTimeout(update, 1000 - (timePassed % 1000));
+    } else {
+      destroyTimer();
+    }
+    if (timePassed == timeLimit) {
+      handleNextButtonClick();
+    }
+  }
+
   ////////////////////////  TIMER CODE ENDS /////////////////
 });

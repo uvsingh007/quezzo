@@ -21,11 +21,14 @@ router.post('/save-recording', upload.single('recording'), (req, res) => {
     fs.writeFile(filePath, recording.buffer, (err) => {
       if (err) {
         console.error('Error saving recording:', err);
-        return res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: 'Error saving recording file', details: err.message });
       }
 
       console.log('Recording saved successfully');
-      res.status(200).json({ success: true });
+
+      // Modify the response to include the file path or identifier
+      const recordingPath = `/recordings/recording_${Date.now()}.webm`;
+      res.status(200).json({ success: true, recordingPath });
     });
   } catch (error) {
     console.error('Error handling recording upload:', error);

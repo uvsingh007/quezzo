@@ -13,7 +13,8 @@ const resultSchema = new mongoose.Schema({
   correctCount: { type: String, default: 0 },
   incorrectCount: { type: String, default: 0 },
   date: { type: Date, default: Date.now },
-  languageName : {type : String}
+  languageName : {type : String},
+  recordingPath : {type: String}
 },{
   versionKey : false 
 });
