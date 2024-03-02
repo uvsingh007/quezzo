@@ -106,12 +106,46 @@ document.addEventListener("DOMContentLoaded", async function () {
     );
   }
 
+  function stopRecording() {
+    try {
+      console.log('Stopping recording...');
+      const mediaRecorderJSON = localStorage.getItem('mediaRecorder');
+      
+      if (mediaRecorderJSON) {
+        const mediaRecorderData = JSON.parse(mediaRecorderJSON);
+        
+        if (mediaRecorderData) {
+          const mediaRecorder = new MediaRecorder(new MediaStream());
+          Object.assign(mediaRecorder, mediaRecorderData);
+  
+          if (mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            console.log('Recording stopped.');
+          } else {
+            console.warn('MediaRecorder is already in an inactive state.');
+          }
+        } else {
+          console.warn('Failed to parse MediaRecorder data from localStorage.');
+        }
+      } else {
+        console.warn('No MediaRecorder data found in localStorage.');
+      }
+  
+      localStorage.removeItem('mediaRecorder');
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  }
+  
   function endQuiz() {
+    stopRecording();
+    console.log("enderwecoerding")
+  
     submitResults();
     scoreElement.textContent = score;
-    setTimeout(function () {
-      window.location.href = "../pages/result.html";
-    }, 500);   
+    // setTimeout(function () {
+    //   window.location.href = "../pages/result.html";
+    // }, 500);
   }
 
   function resetTimer() {
@@ -196,6 +230,63 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
+  function startRecording() {
+    try {
+      console.log('Starting recording...');
+      const stream = navigator.mediaDevices.getDisplayMedia({ video: true })
+        .then(function (stream) {
+          const mediaRecorder = new MediaRecorder(stream);
+          const recordedChunks = [];
+  
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              recordedChunks.push(event.data);
+            }
+          };
+  
+          mediaRecorder.onstop = () => {
+            const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+            postRecordingToServer(recordedBlob);
+          };
+  
+          mediaRecorder.start();
+  
+          // Save the mediaRecorder object for later use
+          localStorage.setItem('mediaRecorder', JSON.stringify(mediaRecorder));
+          console.log('Recording started.');
+        })
+        .catch(function (error) {
+          console.error('Error starting recording:', error);
+        });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
+  }
+  
+  function stopRecording() {
+    const mediaRecorder = JSON.parse(localStorage.getItem('mediaRecorder'));
+  
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      console.log('Recording stopped.');
+    }
+  
+    localStorage.removeItem('mediaRecorder');
+  }
+  
+  function postRecordingToServer(blob) {
+    const formData = new FormData();
+    formData.append('recording', blob, 'quiz_recording.webm');
+  
+    fetch(`${BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData,
+    })
+      .then(response => response.json())
+      .then(data => console.log('Recording uploaded:', data))
+      .catch(error => console.error('Error uploading recording:', error));
+  }
+
   async function fetchQuestions(language) {
     try {
       const response = await fetch(`${BASE_URL}/questions?lang=${language}`);
@@ -206,6 +297,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       if (data.msg && Array.isArray(data.msg)) {
         if (data.msg.length > 0) {
           questions = data.msg;
+          startRecording();
           startQuiz();
         } else {
           console.error(
@@ -400,54 +492,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
   
   // Check if getUserMedia and screen sharing are supported
-  if (
-    navigator.mediaDevices &&
-    navigator.mediaDevices.getUserMedia &&
-    navigator.mediaDevices.getDisplayMedia
-  ) {
-    // Ask for screen share readiness
-    askForScreenShareReady()
-    .then(async function (isScreenShareReady) {
-      console.log("isScreenShareReady:", isScreenShareReady);
-  
-      if (isScreenShareReady) {
-        try {
-          console.log("Accessing camera...");
-          // Access camera
-          await accessCamera();
-          console.log("Camera access successful.");
-  
-          console.log("Accessing screen share...");
-          // Access screen share
-          await accessScreenShare();
-          console.log("Screen share access successful.");
-  
-          console.log("Updating...");
-          // Update
-          await update();
-          console.log("Update successful.");
-        } catch (error) {
-          console.error("Error accessing camera, screen share, or updating:", error);
-          alert("Error accessing camera, screen share, or updating. Please allow access and reload the page to start the quiz.");
-          location.reload();
-        }
-      } else {
-        alert("Screen share canceled. Please reload the page when you are ready.");
-        location.reload();
-      }
-    })
-    .catch(function (error) {
-      console.error("Error asking for screen share readiness:", error);
-      alert("Error asking for screen share readiness. Please reload the page to start the quiz.");
-      location.reload();
-    });
-  } else {
-    console.error("getUserMedia or screen sharing is not supported");
-    alert(
-      "Camera or screen sharing not supported. Please use a browser that supports camera and screen sharing access and reload the page to start the quiz."
-    );
-    location.reload();
-  }
+
   
   // Make Draggable function
   function makeDraggable(element) {
@@ -476,7 +521,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   let isCameraActive = false;
   function startQuizIfReady() {
     if (isCameraActive && isScreenShareActive) {
-      startQuiz();
+      startRecording();
+      // startQuiz();
     }
   }
   startQuizIfReady();
@@ -484,110 +530,5 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
   ////////////////////////////////   TIMER CODE ///////////////////////////
-
-  var width = 150,
-    height = 150,
-    timePassed = 0,
-    timeLimit = 26;
-
-  var fields = [
-    {
-      value: timeLimit,
-      size: timeLimit,
-      update: function () {
-        return (timePassed = timePassed + 1);
-      },
-    },
-  ];
-
-  var arc = d3.svg
-    .arc()
-    .innerRadius(width / 3 - 10)
-    .outerRadius(width / 3 - 25)
-    .startAngle(0)
-    .endAngle(function (d) {
-      return (d.value / d.size) * 2 * Math.PI;
-    });
-
-  var svg = d3
-    .select(".container")
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-  var field = svg
-    .selectAll(".field")
-    .data(fields)
-    .enter()
-    .append("g")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
-    .attr("class", "field");
-
-  var back = field
-    .append("path")
-    .attr("class", "path path--background")
-    .attr("d", arc);
-
-  var path = field.append("path").attr("class", "path path--foreground");
-
-  var label = field.append("text").attr("class", "label").attr("dy", ".35em");
-
-  function pulseText() {
-    back.classed("pulse", true);
-    label.classed("pulse", true);
-
-    if (timeLimit - timePassed >= 0) {
-      label
-        .style("font-size", "20px")
-        .attr("transform", "translate(0," + +8 + ")")
-        .text(function (d) {
-          return d.size - d.value;
-        });
-    }
-
-    label
-      .transition()
-      .ease("elastic")
-      .duration(900)
-      .style("font-size", "25px")
-      .attr("transform", "translate(0," + -0 + ")");
-  }
-
-  function arcTween(b) {
-    var i = d3.interpolate(
-      {
-        value: b.previous,
-      },
-      b
-    );
-    return function (t) {
-      return arc(i(t));
-    };
-  }
-
-  async function update() {
-    field.each(function (d) {
-      (d.previous = d.value), (d.value = d.update(timePassed));
-    });
-
-    path.transition().ease("elastic").duration(500).attrTween("d", arcTween);
-
-    if (timeLimit - timePassed <= 10) {
-      pulseText();
-    } else {
-      label.text(function (d) {
-        return d.size - d.value;
-      });
-    }
-    if (timePassed <= timeLimit) {
-      setTimeout(update, 1000 - (timePassed % 1000));
-    } else {
-      destroyTimer();
-    }
-    if (timePassed == timeLimit) {
-      handleNextButtonClick();
-    }
-  }
-
   ////////////////////////  TIMER CODE ENDS /////////////////
 });
