@@ -114,7 +114,9 @@ li{
 .login-signup>a>img{
     border-radius: 100%;
     height: 40px;
+    width: 40px;
     margin-right: 10px;
+    border: 2px solid white;
 }
 
 .logo-menu{
@@ -290,7 +292,18 @@ li{
     margin-bottom: 40px;
 }
 
+<<<<<<< HEAD
 .lang-card{
+=======
+.lang-container{
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.lang-card {
+>>>>>>> 193a38a1d1ebbae86e41e9b0baf5d78e9ec7c043
     position: relative;
     margin-bottom: 20px;
     margin-right: 20px;
@@ -303,19 +316,16 @@ li{
     filter: grayscale(100%);
 }
 
-.cover{
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    opacity: 0.5;
-    border-radius: 20px;
+.lang-card:hover {
+    filter: grayscale(0%);
 }
 
+<<<<<<< HEAD
 .lang-card:hover{
     filter: grayscale(0%);
 }
+=======
+>>>>>>> 193a38a1d1ebbae86e41e9b0baf5d78e9ec7c043
 
 .lang-card>img{
     height: 100px;
@@ -371,6 +381,7 @@ li{
         gap: 20px;
         flex-wrap: wrap;
         border-top: 1px solid var(--grey-three);
+        overflow: hidden;
     }
 
     .touch>h3{

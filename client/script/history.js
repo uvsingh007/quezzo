@@ -2,6 +2,11 @@ const apiUrl = 'http://localhost:3000/results';
 const userId = localStorage.getItem("userId");
 const historyContainer = document.querySelector('.history-container');
 const token = localStorage.getItem('token');
+const backButton =  document.getElementById("back-button");
+
+backButton.addEventListener("click",()=>{
+    window.history.back();
+})
 
 document.addEventListener('DOMContentLoaded', async function () {
     try {
