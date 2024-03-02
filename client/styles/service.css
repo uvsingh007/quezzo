@@ -182,6 +182,9 @@ li{
   padding: 5%;
 }
 
+.hero-cont{
+  text-align: center;
+}
 .hero-cont>h5{
   color: var(--grey-two);
   font-size: 20px;
@@ -195,8 +198,75 @@ li{
 
 .grid-cont{
   display: flex;
-  
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
 }
+
+.grid-item{
+  text-align: center;
+  padding: 20px;
+  max-width: 300px;
+  min-height: 150px;
+  border-radius: 20px;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--grey-two);
+  cursor: pointer;
+}
+
+.grid-item>div>h4{
+  font-size: 20px;
+  color: var(--grey-one);
+  margin-bottom: 10px;
+}
+
+.grid-item>i{
+  font-size: 40px;
+  margin-bottom: 20px;
+  color: var(--grey-one);
+}
+
+.services-section{
+  padding: 5%;
+}
+
+.services-section>h1{
+  font-size: 40px;
+  margin-bottom: 30px;
+  color: var(--grey-one);
+  text-align: center;
+}
+
+.service-card{
+  display: flex;
+  justify-content: center;
+  /* align-items: center; */
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.card{
+  width: 400px;
+  color: var(--grey-two);
+  border-radius: 20px;
+}
+
+.card>h4{
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: var(--grey-one);
+}
+.card>img{
+  width: 100%;
+  height: 300px;
+  margin-bottom: 30px;
+}
+
 
 /* =========================footer start==================================== */
 .footer{
@@ -421,5 +491,13 @@ li{
 
   .main-btn{
     font-size: unset;
+  }
+
+  .hero-cont>h2{
+    font-size: 30px;
+  }
+
+  .services>h1{
+    font-size: 30px;
   }
 }
