@@ -222,6 +222,7 @@ li{
         justify-content: space-between;
         gap: 20px;
         flex-wrap: wrap;
+        overflow: hidden;
     }
 
     .touch>h3{
