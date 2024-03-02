@@ -209,6 +209,7 @@ li{
     justify-content: space-between;
     gap: 20px;
     flex-wrap: wrap;
+    overflow: hidden;
 }
 
 .touch>h3{
@@ -323,7 +324,7 @@ li{
         left: -25%;
     }
     100% {
-        left: 80%;
+        left: 100%;
     }
 }
 
@@ -332,7 +333,7 @@ li{
         left: -25%;
     }
     100% {
-        left: 80%;
+        left: 100%;
 }
 }
 
@@ -341,7 +342,7 @@ li{
         left: -25%;
     }
     100% {
-        left: 80%;
+        left: 100%;
     }
 }
 
@@ -407,16 +408,5 @@ li{
     .hero-img{
         display: none;
     }
-
-    /* =====footer start===== */
-    .footer-bg-one {
-        display:none;
-    }
-
-    .footer-bg-two {
-       display: none;
-    }
-
-    /* =====footer end===== */
 }
 
