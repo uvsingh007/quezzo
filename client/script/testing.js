@@ -46,16 +46,14 @@ document.addEventListener("DOMContentLoaded", () => {
   
       submitButton.addEventListener("click", () => {
         const selectedOption = getSelectedOption();
-        console.log("fddasf:", selectedOption)
         if (selectedOption !== null) {
+          console.log(selectedOption, "selected optyion")
           socket.emit("submitAnswer", { roomName: currentUser.roomName, answer: selectedOption });
+          clearOptions();
+
         }
+        
       });
-  
-    nextButton.addEventListener("click", () => {
-      clearOptions();
-      socket.emit("nextQuestion", currentUser.roomName);
-    });
   
     socket.on("updateUserCount", (userCount) => {
       userCountElement.textContent = userCount;
