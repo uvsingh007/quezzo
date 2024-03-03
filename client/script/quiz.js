@@ -153,9 +153,9 @@ document.addEventListener("DOMContentLoaded", async function () {
   function endQuiz() {
     stopRecording();
     scoreElement.textContent = score;
-    // setTimeout(function () {
-    //   window.location.href = "../pages/result.html";
-    // }, 500);
+    setTimeout(function () {
+      window.location.href = "../pages/result.html";
+    }, 700);
   }
 
   function resetTimer() {
