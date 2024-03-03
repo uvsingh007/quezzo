@@ -33,6 +33,7 @@ li{
     width: 100%;
     background-color:var(--royal-violet);
     z-index: 10;
+    border-top: 1px solid var(--grey-three);
 }
 
 #nav-menu{
@@ -210,6 +211,7 @@ li{
     gap: 20px;
     flex-wrap: wrap;
     overflow: hidden;
+    border-top: 1px solid var(--grey-three);
 }
 
 .touch>h3{
