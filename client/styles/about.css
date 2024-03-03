@@ -139,7 +139,8 @@ li{
 .about-hero{
     height: 50vh;
     padding-top: 100px;
-    background-image: url("../assets/images/about.jpg");
+    background-color: var(--royal-violet);
+    /* background-image: url("../assets/images/about.jpg"); */
     background-position: center;
     background-size: cover;
     font-size: 50px;
@@ -207,7 +208,7 @@ li{
     justify-content: space-between;
     align-items: center;
     text-align: center;
-    border-bottom: 1px solid var(--grey-three);
+    /* border-bottom: 1px solid var(--grey-three); */
 }
 
 
@@ -223,6 +224,7 @@ li{
         gap: 20px;
         flex-wrap: wrap;
         overflow: hidden;
+        border-top: 1px solid var(--grey-three);
     }
 
     .touch>h3{
