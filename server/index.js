@@ -55,6 +55,7 @@
     console.log('A user connected');
 
     socket.on('joinRoom', ({ username, roomName }) => {
+      console.log("line 58",roomName);
       socket.join(roomName);
     
       users[socket.id] = { username, roomName, score: 0 };
@@ -80,13 +81,12 @@
 
     socket.on('submitAnswer', ({ roomName, answer }) => {
       const user = users[socket.id];
+      console.log("lione 84",roomName)
   
       if (user) {
           const currentQuestion = quizQuestions[currentQuestionIndex];
   
           console.log('User:', user);   
-          console.log('Current Question:', currentQuestion);
-  
           if (answer === currentQuestion.answerIndex) {
               user.score += 1;
           }
@@ -100,9 +100,11 @@
               console.log('Moving to Next Question. Index:', currentQuestionIndex);
   
               const nextQuestion = quizQuestions[currentQuestionIndex];
-              console.log('Next Question:', nextQuestion);
   
-              io.to(roomName).emit('question', nextQuestion);
+                socket.emit('question', nextQuestion);
+                console.log("Next question emitted to:", socket.id);
+              // socket.emit("question",nextQuestion);
+              console.log("event triggered",roomName);
           } else {
               console.log('Game Over');
               io.to(roomName).emit('gameOver');

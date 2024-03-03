@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const socket = io("http://localhost:3000");
+    const socket = io("http://localhost:3000",{transports:["websocket"]});
   
     const roomSetupSection = document.getElementById("room-setup-section");
     const quizSection = document.getElementById("quiz-section");
@@ -24,10 +24,11 @@ document.addEventListener("DOMContentLoaded", () => {
   
     let currentUser = {};
     let quizQuestions = [];
+    let roomName ;
   
     joinRoomButton.addEventListener("click", () => {
-        const username = usernameInput.value.trim();
-        const roomName = roomNameInput.value.trim();
+        const username = usernameInput.value;
+        roomName = roomNameInput.value;
         if (username && roomName) {
           socket.emit("joinRoom", { username, roomName });
           hideRoomSetup();
@@ -36,8 +37,9 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Client-side code to create a room
       createRoomButton.addEventListener("click", () => {
-        const username = usernameInput.value.trim();
-        const roomName = roomNameInput.value.trim();  // Get the room name from the input field
+        const username = usernameInput.value;
+        roomName = roomNameInput.value ; // Get the room name from the input field
+        console.log(username,roomName,"line 41");
         if (username && roomName) {
           socket.emit("createRoom", { username, roomName });
           hideRoomSetup();
@@ -47,8 +49,8 @@ document.addEventListener("DOMContentLoaded", () => {
       submitButton.addEventListener("click", () => {
         const selectedOption = getSelectedOption();
         if (selectedOption !== null) {
-          console.log(selectedOption, "selected optyion")
-          socket.emit("submitAnswer", { roomName: currentUser.roomName, answer: selectedOption });
+          console.log(selectedOption, "selected option", roomName)
+          socket.emit("submitAnswer", { roomName: roomName, answer: selectedOption });
           clearOptions();
 
         }
@@ -65,7 +67,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   
     socket.on("question", (question) => {
+      console.log("Current question : ",question);
       displayQuestion(question);
+      console.log("Called display function")
       enableButton(submitButton);
       disableButton(nextButton);
     });
@@ -85,7 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
   
     function startQuiz(firstQuestion) {
       quizQuestions = [];
-      currentUser = { score: 0, roomName: firstQuestion.roomName };
+      currentUser = { score: 0, roomName: roomName };
+      console.log("line 93",currentUser);
       quizQuestions.push(firstQuestion);
       displayQuestion(firstQuestion);
     }
