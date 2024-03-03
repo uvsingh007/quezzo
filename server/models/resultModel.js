@@ -12,7 +12,9 @@ const resultSchema = new mongoose.Schema({
   totalScore: { type: Number, default: 0 },
   correctCount: { type: String, default: 0 },
   incorrectCount: { type: String, default: 0 },
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: Date.now },
+  languageName : {type : String},
+  recordingPath : {type: String}
 },{
   versionKey : false 
 });
